@@ -1,0 +1,3 @@
+- name: remove requested mount points and LVs
+  include: vg_remover.yml
+  with_items: "{{ lv_remover_mounts }}"

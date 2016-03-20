@@ -1,0 +1,21 @@
+- name: set mount_point
+  set_fact:
+      mount_point: "{{ item }}"
+
+- name: check if "{{ mount_point }}" mountpoint is presented in fstab
+  shell: cat /etc/fstab|grep "\s{{ mount_point }}\s"
+  register: mp_fstab
+  changed_when: mp_fstab.rc == 0
+  failed_when: no
+
+# for some reason umount doesn not remove record from fstab
+- name: umount ssd and remove it from fstab
+  mount: name={{ mp_fstab.stdout.split()[1] }} src={{ mp_fstab.stdout.split()[0] }} fstype={{ mp_fstab.stdout.split()[2] }} state={{ item }}
+  with_items:
+      - unmounted
+      - absent
+  when: mp_fstab|changed
+
+- name: remove lv for {{ item }}
+  shell: lvremove -f {{ mp_fstab.stdout.split()[0] }}
+  when: mp_fstab|changed
